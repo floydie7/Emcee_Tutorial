@@ -26,6 +26,7 @@ a_true = 3.35
 b_true = 0.37
 c_true = 4.17
 
+# Variable error factor
 verr = 0
 #%%
 # Now, generate some synthetic data from our model.
@@ -61,10 +62,12 @@ def lnlike(param, x, y, yerr):
 Now, we'll minimize the negative likelihood thus maximizing the likelihood function
 '''
 nll = lambda *args: -2.0 * lnlike(*args)  # Define negative likelihood
-result = op.minimize(nll, [a_true, b_true, c_true], args=(x, y, yerr))
-a_ml, b_ml, c_ml = result['x']
-print("Maximum likelihood values of parameters are:\n a={0:.3f}, b={1:.3f}, and c={2:.3f} \n True values: a={3}, b={4},\
+result = op.minimize(nll, [a_true, b_true, c_true], args=(x, y, yerr), method= 'Nelder-Mead')
+a_ml, b_ml, c_ml = result.x
+Chi_nu = result.fun / (N - 3)
+print("Maximum likelihood values of parameters are:\n a={0}, b={1}, and c={2} \n True values: a={3}, b={4},\
  c={5}".format(a_ml, b_ml, c_ml, a_true, b_true, c_true))
+print("Reduced chi-squared value = ",Chi_nu)
 #%%
 fig, ax = plt.subplots()
 ax.plot(x, y_true, color='r')

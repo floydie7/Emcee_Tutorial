@@ -40,7 +40,9 @@ ChiSquare = lambda *args: ChiSq(*args)
 result = op.minimize(ChiSquare, [a_true, b_true, c_true], args=(x, y, yerr),options={'disp': True},method = 'Nelder-Mead')
 a_ChiSq, b_ChiSq, c_ChiSq = result.x
 
-red_ChiSq = result.fun / ()
+red_ChiSq = result.fun / (N - 3)
 
-print("Maximum likelihood values of parameters are:\n a={0:.3f}, b={1:.3f}, and c={2:.3f} \n True values: a={3}, b={4},\
+print("Maximum likelihood values of parameters are:\n a={0:.5f}, b={1:.5f}, and c={2:.5f} \n True values: a={3}, b={4},\
  c={5}".format(a_ChiSq, b_ChiSq, c_ChiSq, a_true, b_true, c_true))
+
+print("Reduced Chi-squared = ", red_ChiSq)
