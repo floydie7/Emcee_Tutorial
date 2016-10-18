@@ -29,6 +29,11 @@ y_true = a_true * x**2 + b_true * x + c_true
 yerr = 0.1 * y_true/N + verr * np.random.rand(N)
 y = y_true + yerr * np.random.randn(N)
 
+def funct(param, x):
+    a, b, c = param
+    model = a * x**2 + b * x + c
+    return model
+
 # Define the Chi-Squared function
 def ChiSq(param, x, y, yerr):
     a, b, c = param
@@ -36,13 +41,18 @@ def ChiSq(param, x, y, yerr):
     inv_sigma2 = 1.0/(yerr**2)
     return np.sum((y - model)**2 * inv_sigma2)
 
+Chi_table = []
+def Obj_val(Xi):
+    Chi_table.append(ChiSq(Xi, x, y, yerr))
+
 ChiSquare = lambda *args: ChiSq(*args)
-result = op.minimize(ChiSquare, [a_true, b_true, c_true], args=(x, y, yerr),options={'disp': True},method = 'Nelder-Mead')
-a_ChiSq, b_ChiSq, c_ChiSq = result.x
+result = op.fmin(ChiSquare, [a_true, b_true, c_true], args=(x, y, yerr), callback=Obj_val)
 
-red_ChiSq = result.fun / (N - 3)
+op.curve_fit(funct, x, y)
 
-print("Maximum likelihood values of parameters are:\n a={0:.5f}, b={1:.5f}, and c={2:.5f} \n True values: a={3}, b={4},\
- c={5}".format(a_ChiSq, b_ChiSq, c_ChiSq, a_true, b_true, c_true))
-
-print("Reduced Chi-squared = ", red_ChiSq)
+# red_ChiSq = result.fun / (N - 3)
+#
+# print("Maximum likelihood values of parameters are:\n a={0:.5f}, b={1:.5f}, and c={2:.5f} \n True values: a={3}, b={4},\
+#  c={5}".format(a_ChiSq, b_ChiSq, c_ChiSq, a_true, b_true, c_true))
+#
+# print("Reduced Chi-squared = ", red_ChiSq)
