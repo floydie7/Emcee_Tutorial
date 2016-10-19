@@ -33,7 +33,7 @@ verr = 0
 N = 1000         # Number of data points
 x = np.sort(2*np.random.rand(N))
 y_true = a_true*x**2 + b_true*x + c_true
-yerr = 0.1 * y_true/N + verr * np.random.rand(N)
+yerr = 0.1 * y_true + verr * np.random.rand(N)
 y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 #%%
@@ -106,7 +106,8 @@ Now we can set up our MCMC sampler to explore the possible values nearby our max
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
 ndim, nwalkers = 3, 100
 # Set the inital position of the walkers in the space.
-pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+#pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+pos = [[0,0,0] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 
 # Set up and run the sampler.
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))

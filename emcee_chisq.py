@@ -29,30 +29,54 @@ y_true = a_true * x**2 + b_true * x + c_true
 yerr = 0.1 * y_true/N + verr * np.random.rand(N)
 y = y_true + yerr * np.random.randn(N)
 
-def funct(param, x):
+def modelfn(x, param):
     a, b, c = param
-    model = a * x**2 + b * x + c
-    return model
+    return a * x**2 + b * x + c
 
-# Define the Chi-Squared function
-def ChiSq(param, x, y, yerr):
-    a, b, c = param
-    model = a * x**2 + b * x + c
-    inv_sigma2 = 1.0/(yerr**2)
-    return np.sum((y - model)**2 * inv_sigma2)
+def fit_bootstrap(p0, datax, datay, function, yerr_systematic=0.0):
 
-Chi_table = []
-def Obj_val(Xi):
-    Chi_table.append(ChiSq(Xi, x, y, yerr))
+    errfunc = lambda p, x, y: function(x,p) - y
 
-ChiSquare = lambda *args: ChiSq(*args)
-result = op.fmin(ChiSquare, [a_true, b_true, c_true], args=(x, y, yerr), callback=Obj_val)
+    # Fit first time
+    pfit, perr = op.leastsq(errfunc, p0, args=(datax, datay), full_output=0)
 
-op.curve_fit(funct, x, y)
 
-# red_ChiSq = result.fun / (N - 3)
-#
-# print("Maximum likelihood values of parameters are:\n a={0:.5f}, b={1:.5f}, and c={2:.5f} \n True values: a={3}, b={4},\
-#  c={5}".format(a_ChiSq, b_ChiSq, c_ChiSq, a_true, b_true, c_true))
-#
-# print("Reduced Chi-squared = ", red_ChiSq)
+    # Get the stdev of the residuals
+    residuals = errfunc(pfit, datax, datay)
+    sigma_res = np.std(residuals)
+
+    sigma_err_total = np.sqrt(sigma_res**2 + yerr_systematic**2)
+
+    # 100 random data sets are generated and fitted
+    ps = []
+    for i in range(100):
+
+        randomDelta = np.random.normal(0., sigma_err_total, len(datay))
+        randomdataY = datay + randomDelta
+
+        randomfit, randomcov = \
+            op.leastsq(errfunc, p0, args=(datax, randomdataY),\
+                             full_output=0)
+
+        ps.append(randomfit) 
+
+    ps = np.array(ps)
+    mean_pfit = np.mean(ps,0)
+
+    # You can choose the confidence interval that you want for your
+    # parameter estimates: 
+    Nsigma = 1. # 1sigma gets approximately the same as methods above
+                # 1sigma corresponds to 68.3% confidence interval
+                # 2sigma corresponds to 95.44% confidence interval
+    err_pfit = Nsigma * np.std(ps,0) 
+
+    pfit_bootstrap = mean_pfit
+    perr_bootstrap = err_pfit
+    return pfit_bootstrap, perr_bootstrap 
+
+pfit, perr = fit_bootstrap([0,0,0], x, y, modelfn)
+
+print("\nFit parameters and parameter errors from bootstrap method :")
+print("pfit = ", pfit)
+print("perr = ", perr)
+print("True values = ",[a_true, b_true, c_true])
