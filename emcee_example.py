@@ -111,7 +111,7 @@ pos = [[0,0,0] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 
 # Set up and run the sampler.
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
-sampler.run_mcmc(pos, 1000)    # Run sampler at initial position pos for 500 steps.
+sampler.run_mcmc(pos, 2000)    # Run sampler at initial position pos for 500 steps.
 #%%
 '''
 To view the results let's look at the variation in the parameters
@@ -138,7 +138,7 @@ bx3.set_ylabel("$c$")
 plt.show()
 fig2.savefig('param_var.pdf', format='pdf')
 
-burnin = 50
+burnin = 200
 samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
 fig3 = corner.corner(samples, labels=["$a$", "$b$", "$c$"], truths=[a_true, b_true, c_true])
