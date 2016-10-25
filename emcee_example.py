@@ -38,11 +38,11 @@ y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 #%%
 # First figure we'll show our true model in red and our synthetic data we just generated.
-fig, ax = plt.subplots()
-ax.plot(x, y_true, color='r')
-ax.errorbar(x, y, yerr=yerr, fmt='k.')
-plt.show();
-fig.savefig('model_data.pdf', format='pdf')
+# fig, ax = plt.subplots()
+# ax.plot(x, y_true, color='r')
+# ax.errorbar(x, y, yerr=yerr, fmt='k.')
+# plt.show();
+# fig.savefig('model_data.pdf', format='pdf')
 #%%
 '''
 Here we want to define our maximum likelihood function of a least squares solution in order to optimize it.
@@ -61,21 +61,21 @@ def lnlike(param, x, y, yerr):
 '''
 Now, we'll minimize the negative likelihood thus maximizing the likelihood function
 '''
-nll = lambda *args: -2.0 * lnlike(*args)  # Define negative likelihood
-result = op.minimize(nll, [a_true, b_true, c_true], args=(x, y, yerr), method= 'Nelder-Mead')
-a_ml, b_ml, c_ml = result.x
-Chi_nu = result.fun / (N - 3)
-print("Maximum likelihood values of parameters are:\n a={0}, b={1}, and c={2} \n True values: a={3}, b={4},\
- c={5}".format(a_ml, b_ml, c_ml, a_true, b_true, c_true))
-print("Reduced chi-squared value = ",Chi_nu)
-#%%
-fig, ax = plt.subplots()
-ax.plot(x, y_true, color='r')
-ax.errorbar(x, y, yerr=yerr, fmt='k.')
-ax.plot(x, a_ml * x**2 + b_ml * x + c_ml, 'k--', label='$\chi^2$ fit')
-ax.legend(loc=2)
-plt.show()
-fig.savefig('max_like.pdf', format='pdf')
+# nll = lambda *args: -2.0 * lnlike(*args)  # Define negative likelihood
+# result = op.minimize(nll, [a_true, b_true, c_true], args=(x, y, yerr), method= 'Nelder-Mead')
+# a_ml, b_ml, c_ml = result.x
+# Chi_nu = result.fun / (N - 3)
+# print("Maximum likelihood values of parameters are:\n a={0}, b={1}, and c={2} \n True values: a={3}, b={4},\
+#  c={5}".format(a_ml, b_ml, c_ml, a_true, b_true, c_true))
+# print("Reduced chi-squared value = ",Chi_nu)
+# #%%
+# fig, ax = plt.subplots()
+# ax.plot(x, y_true, color='r')
+# ax.errorbar(x, y, yerr=yerr, fmt='k.')
+# ax.plot(x, a_ml * x**2 + b_ml * x + c_ml, 'k--', label='$\chi^2$ fit')
+# ax.legend(loc=2)
+# plt.show()
+# fig.savefig('max_like.pdf', format='pdf')
 #%%
 '''
 In order to determine our posterior probablities we will need to use Bayes' Theorem
@@ -105,13 +105,25 @@ Now we can set up our MCMC sampler to explore the possible values nearby our max
 
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
 ndim, nwalkers = 3, 100
-# Set the inital position of the walkers in the space.
-#pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
-pos = [[0,0,0] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+# Set the inital position of the walkers in the space. To start, set walkers uniformly distributed in space.
+# pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
 
 # Set up and run the sampler.
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
-sampler.run_mcmc(pos, 2000)    # Run sampler at initial position pos for 500 steps.
+sampler.run_mcmc(pos0, 300)   # Run sampler at initial position pos for 300 steps.
+
+burnin = 100    # Set burn-in to be 1/3 Number of steps.
+samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
+result0 = np.percentile(samples, 50, axis=0)
+print("Initial result:",result0)
+
+sampler.reset()     # Reset the sampler
+
+# Spread out original run's positions according to a standard normal distribution.
+pos1 = [result0 + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
+nsteps = 1e6
+sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 #%%
 '''
 To view the results let's look at the variation in the parameters
@@ -136,25 +148,25 @@ bx3.axhline(c_true, color='blue', linewidth=2)
 bx3.set_ylabel("$c$")
 
 plt.show()
-fig2.savefig('param_var.pdf', format='pdf')
+ fig2.savefig('param_var.pdf', format='pdf')
 
-burnin = 200
+burnin = nsteps/3.0    # Set burn-in to be 1/3 Number of steps.
 samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
 fig3 = corner.corner(samples, labels=["$a$", "$b$", "$c$"], truths=[a_true, b_true, c_true])
 plt.show()
-fig3.savefig('corner_plot.pdf', format='pdf')
+ fig3.savefig('corner_plot.pdf', format='pdf')
 
-plt.figure()
-for a, b, c in samples[np.random.randint(len(samples), size=100)]:
-    plt.plot(x, a*x**2+b*x+c, color="k", alpha=0.1)
-plt.plot(x, a_true*x**2+b_true*x+c_true, color="r", lw=1, alpha=0.8)
-plt.errorbar(x, y, yerr=yerr, fmt=".k")
-plt.xlabel("$x$")
-plt.ylabel("$y$")
-plt.savefig('sampler_data.pdf',format='pdf')
-plt.axis([1.8, 2.0, 15, 19])
-plt.savefig('sampler_data_zoom.pdf', format='pdf')
+# plt.figure()
+# for a, b, c in samples[np.random.randint(len(samples), size=100)]:
+#     plt.plot(x, a*x**2+b*x+c, color="k", alpha=0.1)
+# plt.plot(x, a_true*x**2+b_true*x+c_true, color="r", lw=1, alpha=0.8)
+# plt.errorbar(x, y, yerr=yerr, fmt=".k")
+# plt.xlabel("$x$")
+# plt.ylabel("$y$")
+# plt.savefig('sampler_data.pdf',format='pdf')
+# plt.axis([1.8, 2.0, 15, 19])
+# plt.savefig('sampler_data_zoom.pdf', format='pdf')
 
 a_mcmc, b_mcmc, c_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]), zip(*np.percentile(samples, [16, 50, 84], axis=0)))
 print("""MCMC result:
