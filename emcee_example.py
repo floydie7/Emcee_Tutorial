@@ -78,15 +78,15 @@ Now, we'll minimize the negative likelihood thus maximizing the likelihood funct
 # fig.savefig('max_like.pdf', format='pdf')
 #%%
 '''
-In order to determine our posterior probablities we will need to use Bayes' Theorem
+In order to determine our posterior probabilities we will need to use Bayes' Theorem
 P(a,b,c|x,y,sigma) ~ P(a,b,c) * P(y|x,sigma,a,b,c)
 '''
 
 
-# For our example let's make no asumptions on the distributions on the paramers an use a uniform distribution.
+# For our example let's make no assumptions on the distributions on the parameters and use a uniform distribution.
 def lnprior(param):
     a, b, c = param
-    if 0.0 < a < 5.0 and 0.0 < b < 5.0 and 0.0 < c < 5.0:
+    if 0.0 < a < 6.0 and -1.0 < b < 1.0 and 0.0 < c < 8.0:
         return 0.0
     return -np.inf
 
@@ -100,12 +100,12 @@ def lnprob(param, x, y, yerr):
 
 #%%
 '''
-Now we can set up our MCMC sampler to explore the possible values nearby our maximium likelihood result
+Now we can set up our MCMC sampler to explore the possible values nearby our maximum likelihood result
 '''
 
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
 ndim, nwalkers = 3, 100
-# Set the inital position of the walkers in the space. To start, set walkers uniformly distributed in space.
+# Set the initial position of the walkers in the space. To start, set walkers uniformly distributed in space.
 # pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
 
@@ -122,7 +122,7 @@ sampler.reset()     # Reset the sampler
 
 # Spread out original run's positions according to a standard normal distribution.
 pos1 = [result0 + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
-nsteps = 1e6
+nsteps = 1000
 sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 #%%
 '''
@@ -147,15 +147,15 @@ bx3.yaxis.set_major_locator(MaxNLocator(5))
 bx3.axhline(c_true, color='blue', linewidth=2)
 bx3.set_ylabel("$c$")
 
-plt.show()
- fig2.savefig('param_var.pdf', format='pdf')
+# plt.show()
+fig2.savefig('param_var.pdf', format='pdf')
 
 burnin = nsteps/3.0    # Set burn-in to be 1/3 Number of steps.
 samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
 fig3 = corner.corner(samples, labels=["$a$", "$b$", "$c$"], truths=[a_true, b_true, c_true])
-plt.show()
- fig3.savefig('corner_plot.pdf', format='pdf')
+# plt.show()
+fig3.savefig('corner_plot.pdf', format='pdf')
 
 # plt.figure()
 # for a, b, c in samples[np.random.randint(len(samples), size=100)]:
