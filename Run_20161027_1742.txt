@@ -1,0 +1,15 @@
+Initial run: nwalkers = 100, nsteps = 300, walkers distributed uniformly.
+Full run: nwalkers = 1000, nsteps = 100000, walkers distributed according to emcee.util.sample_ball (gaussian ball) centered about the initial run's mean value.
+
+step_size is based on 1% of smallest prior bound in both runs.
+
+CPU Time for Full Run: 20:44.84 (m:s)
+
+
+Initial result: [ 3.43668915  0.30288503  4.13282655]
+MCMC result:
+    a = 3.42524030413 +0.0885092176654 -0.0884943029612 (truth: 3.35)
+    b = 0.338437873144 +0.147640077412 -0.147566648728 (truth: 0.37)
+    c = 4.13955427218 +0.0472339141174 -0.0472059138181 (truth: 4.17)
+
+Mean acceptance fraction: 0.64682516

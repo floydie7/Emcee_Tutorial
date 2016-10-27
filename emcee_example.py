@@ -47,8 +47,7 @@ y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 '''
 Here we want to define our maximum likelihood function of a least squares solution in order to optimize it.
 Where the likelihood is defined as
-ln P(y|x,sigma,m,b,f) = -1/2 * sum( ((y_n - a * x^2 + b * x + c)^2 / s_n^2) + ln(2 * pi * s_n^2))
- with s_n^2 = simga_n^2.
+ln P(y|x,sigma,m,b,f) = -1/2 * sum( (y_n - a * x^2 + b * x + c)^2 / sigma_n^2 ).
 '''
 
 
@@ -84,16 +83,16 @@ P(a,b,c|x,y,sigma) ~ P(a,b,c) * P(y|x,sigma,a,b,c)
 
 
 # For our example let's make no assumptions on the distributions on the parameters and use a uniform distribution.
-def lnprior(param):
+def lnprior(param, limits):
     a, b, c = param
-    if 0.0 < a < 6.0 and -1.0 < b < 1.0 and 0.0 < c < 8.0:
+    if limits[0] < a < limits[1] and limits[2] < b < limits[3] and limits[4] < c < limits[5]:
         return 0.0
     return -np.inf
 
 
 # Now the full probability function
-def lnprob(param, x, y, yerr):
-    lp = lnprior(param)
+def lnprob(param, x, y, yerr, limits):
+    lp = lnprior(param, limits)
     if not np.isfinite(lp):
         return -np.inf
     return lp + lnlike(param, x, y, yerr)
@@ -109,20 +108,34 @@ ndim, nwalkers = 3, 100
 # pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
 
-# Set up and run the sampler.
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
-sampler.run_mcmc(pos0, 300)   # Run sampler at initial position pos for 300 steps.
+# Set the bounds on the prior distributions, defining our parameter space.
+prior0_lim = np.array([0., 6., -1., 1., 0., 8.])
+mprior = np.absolute(np.ma.masked_equal(prior0_lim, 0.0, copy=False))
 
+# Set up and run the sampler.
+nsteps, step_size = 300, 0.01*mprior.min()
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim),a=step_size)
+sampler.run_mcmc(pos0, nsteps)   # Run sampler at initial position pos for 300 steps.
+
+# Remove the burn-in and calculate the mean sample values for the parameters.
 burnin = 100    # Set burn-in to be 1/3 Number of steps.
 samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 result0 = np.percentile(samples, 50, axis=0)
 print("Initial result:",result0)
-
-sampler.reset()     # Reset the sampler
+sampler.reset()
 
 # Spread out original run's positions according to a standard normal distribution.
-pos1 = [result0 + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
-nsteps = 1000
+nwalkers = 1000
+# pos1 = [result0 + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
+pos1 = emcee.utils.sample_ball(result0, np.array([1e-2, 1e-2, 1e-2]), size=nwalkers)
+
+# Shrink prior bounds according to the initial run's results
+prior1_lim = np.array([result0[0] - 1.0, result0[0] + 1.0, result0[1] - 1.0, result0[1] + 1.0, result0[2] - 1.0, result0[2] + 1.0])
+mprior = np.absolute(np.ma.masked_equal(prior1_lim, 0.0, copy=False))
+
+# Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
+nsteps, step_size = 100000, 0.01*mprior.min()
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), threads=3)
 sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 #%%
 '''
