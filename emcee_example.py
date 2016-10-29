@@ -10,7 +10,6 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-import scipy.optimize as op
 import emcee
 import corner
 
@@ -58,25 +57,6 @@ def lnlike(param, x, y, yerr):
     return -0.5 * (np.sum((y - model)**2 * inv_sigma2))
 #%%
 '''
-Now, we'll minimize the negative likelihood thus maximizing the likelihood function
-'''
-# nll = lambda *args: -2.0 * lnlike(*args)  # Define negative likelihood
-# result = op.minimize(nll, [a_true, b_true, c_true], args=(x, y, yerr), method= 'Nelder-Mead')
-# a_ml, b_ml, c_ml = result.x
-# Chi_nu = result.fun / (N - 3)
-# print("Maximum likelihood values of parameters are:\n a={0}, b={1}, and c={2} \n True values: a={3}, b={4},\
-#  c={5}".format(a_ml, b_ml, c_ml, a_true, b_true, c_true))
-# print("Reduced chi-squared value = ",Chi_nu)
-# #%%
-# fig, ax = plt.subplots()
-# ax.plot(x, y_true, color='r')
-# ax.errorbar(x, y, yerr=yerr, fmt='k.')
-# ax.plot(x, a_ml * x**2 + b_ml * x + c_ml, 'k--', label='$\chi^2$ fit')
-# ax.legend(loc=2)
-# plt.show()
-# fig.savefig('max_like.pdf', format='pdf')
-#%%
-'''
 In order to determine our posterior probabilities we will need to use Bayes' Theorem
 P(a,b,c|x,y,sigma) ~ P(a,b,c) * P(y|x,sigma,a,b,c)
 '''
@@ -102,6 +82,7 @@ def lnprob(param, x, y, yerr, limits):
 Now we can set up our MCMC sampler to explore the possible values nearby our maximum likelihood result
 '''
 
+# Initial Run to establish values
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
 ndim, nwalkers = 3, 100
 # Set the initial position of the walkers in the space. To start, set walkers uniformly distributed in space.
@@ -110,10 +91,10 @@ pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
 
 # Set the bounds on the prior distributions, defining our parameter space.
 prior0_lim = np.array([0., 6., -1., 1., 0., 8.])
-mprior = np.absolute(np.ma.masked_equal(prior0_lim, 0.0, copy=False))
+wprior = np.absolute(np.array([prior0_lim[i]-prior0_lim[i-1] for i in np.arange(1, len(prior0_lim), 2) ]))
 
 # Set up and run the sampler.
-nsteps, step_size = 300, 0.01*mprior.min()
+nsteps, step_size = 300, 0.01*wprior.min()
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim),a=step_size)
 sampler.run_mcmc(pos0, nsteps)   # Run sampler at initial position pos for 300 steps.
 
@@ -124,6 +105,7 @@ result0 = np.percentile(samples, 50, axis=0)
 print("Initial result:",result0)
 sampler.reset()
 
+# Full run to with updated prior limits and using the initial run's results as starting values
 # Spread out original run's positions according to a standard normal distribution.
 nwalkers = 1000
 # pos1 = [result0 + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
@@ -131,11 +113,12 @@ pos1 = emcee.utils.sample_ball(result0, np.array([1e-2, 1e-2, 1e-2]), size=nwalk
 
 # Shrink prior bounds according to the initial run's results
 prior1_lim = np.array([result0[0] - 1.0, result0[0] + 1.0, result0[1] - 1.0, result0[1] + 1.0, result0[2] - 1.0, result0[2] + 1.0])
-mprior = np.absolute(np.ma.masked_equal(prior1_lim, 0.0, copy=False))
+wprior = np.absolute(np.array([prior1_lim[i]-prior1_lim[i-1] for i in np.arange(1, len(prior1_lim), 2) ]))
 
 # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
-nsteps, step_size = 100000, 0.01*mprior.min()
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), threads=3)
+nsteps, step_size = 1000, 1e-3*wprior.min()
+
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size, threads=3)
 sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 #%%
 '''
@@ -189,3 +172,4 @@ print("""MCMC result:
 """.format(a_mcmc, a_true, b_mcmc, b_true, c_mcmc, c_true))
 
 print("Mean acceptance fraction:", np.mean(sampler.acceptance_fraction))
+# print("Autocorrelation time:", sampler.get_autocorr_time())
