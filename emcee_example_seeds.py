@@ -18,8 +18,9 @@ import corner
 Let's pick something simple like a quadratic function to fit.
 So our function will be y = a*x^2 + b*x + c.
 '''
-for runs in range(100):
-    data = [] # storage array for all runs
+
+data = []  # storage array for all runs
+for runs in range(10):
     print("Run # ",runs)
 
     # First, let's define our "true" parameters.
