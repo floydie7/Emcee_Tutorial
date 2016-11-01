@@ -1,0 +1,13 @@
+Initial result: [ 3.47061149  0.24847409  4.1703307 ]
+# Varying the number of walkers
+Mean parameter fits:
+    a = 3.43399185411 (Truth: 3.35)
+    b = 0.323261412113 (Truth: 0.37)
+    c = 4.1433705953 (Truth: 4.17)
+
+# Varying the number of steps
+Mean parameter fits:
+    a = 3.44709887449 (Truth: 3.35)
+    b = 0.296606398021 (Truth: 0.37)
+    c = 4.15178248472 (Truth: 4.17)
+
