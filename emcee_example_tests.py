@@ -98,7 +98,7 @@ for j in range(6,100,2):
     # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
     nsteps, step_size = 1000, 1e-3*wprior.min()
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), threads=3)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size)
     sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 
     burnin = nsteps/3.0    # Set burn-in to be 1/3 Number of steps.
@@ -127,17 +127,20 @@ ax1.axhline(np.mean(a_sampled), color='red', linewidth=2)
 ax1.errorbar(Nwalkers, a_sampled, yerr=a_err, fmt='.k')
 ax1.axhline(a_true, color='blue', linewidth=2)
 ax1.set_ylabel("$a$")
+ax1.set_xlim([Nwalkers[0]-1,Nwalkers[-1]])
 ax1.set_title("Fits with Nsteps = 1000")
 
 ax2.axhline(np.mean(b_sampled), color='red', linewidth=2)
 ax2.errorbar(Nwalkers, b_sampled, yerr=b_err, fmt='.k')
 ax2.axhline(b_true, color='blue', linewidth=2)
 ax2.set_ylabel("$b$")
+ax2.set_xlim([Nwalkers[0]-1,Nwalkers[-1]])
 
 ax3.axhline(np.mean(c_sampled), color='red', linewidth=2)
 ax3.errorbar(Nwalkers, c_sampled, yerr=c_err, fmt='.k')
 ax3.axhline(c_true, color='blue', linewidth=2)
 ax3.set_ylabel("$c$")
+ax3.set_xlim([Nwalkers[0]-1,Nwalkers[-1]])
 ax3.set_xlabel("Walkers")
 fig.savefig("Num_Walkers.pdf", format='pdf')
 
@@ -158,7 +161,7 @@ for j in range(1,1000):
     # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
     nsteps, step_size = j, 1e-3*wprior.min()
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), threads=3)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size)
     sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 
     burnin = nsteps/3.0    # Set burn-in to be 1/3 Number of steps.
@@ -182,19 +185,19 @@ print("""Mean parameter fits:
     """.format(np.mean(a_sampled), a_true, np.mean(b_sampled), b_true, np.mean(c_sampled), c_true))
 
 fig, (ax1,ax2,ax3) = plt.subplots(nrows=3, ncols=1, sharex=True)
-ax1.axhline(np.mean(a_sampled), color='red', linewidth=2)
 ax1.errorbar(Nsteps, a_sampled, yerr=a_err, fmt='.k')
+ax1.axhline(np.mean(a_sampled), color='red', linewidth=2)
 ax1.axhline(a_true, color='blue', linewidth=2)
 ax1.set_ylabel("$a$")
 ax1.set_title("Fits with Nwalkers = 100")
 
-ax2.axhline(np.mean(b_sampled), color='red', linewidth=2)
 ax2.errorbar(Nsteps, b_sampled, yerr=b_err, fmt='.k')
+ax2.axhline(np.mean(b_sampled), color='red', linewidth=2)
 ax2.axhline(b_true, color='blue', linewidth=2)
 ax2.set_ylabel("$b$")
 
-ax3.axhline(np.mean(c_sampled), color='red', linewidth=2)
 ax3.errorbar(Nsteps, c_sampled, yerr=c_err, fmt='.k')
+ax3.axhline(np.mean(c_sampled), color='red', linewidth=2)
 ax3.axhline(c_true, color='blue', linewidth=2)
 ax3.set_ylabel("$c$")
 ax3.set_xlabel("Steps")
