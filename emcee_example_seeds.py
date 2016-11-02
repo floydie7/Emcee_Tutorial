@@ -20,7 +20,7 @@ So our function will be y = a*x^2 + b*x + c.
 '''
 
 data = []  # storage array for all runs
-for runs in range(10):
+for runs in range(1000):
     print("Run # ",runs)
 
     # First, let's define our "true" parameters.
@@ -121,7 +121,7 @@ for runs in range(10):
     # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
     nsteps, step_size = 1000, 1e-3*wprior.min()
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size, threads=3)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size)
     sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 
     '''
@@ -182,15 +182,33 @@ a_means = [data[i][0][0] for i in range(len(data))]
 b_means = [data[i][1][0] for i in range(len(data))]
 c_means = [data[i][2][0] for i in range(len(data))]
 
+print("""Run-averaged parameter values:
+    a = {0} (truth: {1})
+    b = {2} (truth: {3})
+    c = {4} (truth: {5})
+    """.format(np.mean(a_means), a_true, np.mean(b_means), b_true, np.mean(c_means), c_true))
+
 
 fig, ax = plt.subplots()
-ax.hist(a_means, bins=50)
+ax.hist(a_means, bins=500, align='mid', rwidth=0.9, linewidth=0, color='r')
+ax.axvline(a_true, color='blue', linewidth=2)
+ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(a_means), a_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
+ax.set_title("1000 Runs with Random Seeds")
+ax.set_xlabel("$a$")
 fig.savefig('a_mean_distribution.pdf', format='pdf')
 
 fig, ax = plt.subplots()
-ax.hist(b_means, bins=50)
+ax.hist(b_means, bins=500, align='mid', rwidth=0.9, linewidth=0, color='r')
+ax.axvline(b_true, color='blue', linewidth=2)
+ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(b_means), b_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
+ax.set_title("1000 Runs with Random Seeds")
+ax.set_xlabel("$b$")
 fig.savefig('b_mean_distribution.pdf', format='pdf')
 
 fig, ax = plt.subplots()
-ax.hist(c_means,bins=50)
+ax.hist(c_means, bins=500, align='mid', rwidth=0.9, linewidth=0, color='r')
+ax.axvline(c_true, color='blue', linewidth=2)
+ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(c_means), c_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
+ax.set_title("1000 Runs with Random Seeds")
+ax.set_xlabel("$c$")
 fig.savefig('c_mean_distribution.pdf', format='pdf')
