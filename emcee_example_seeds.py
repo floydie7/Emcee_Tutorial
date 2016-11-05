@@ -122,9 +122,10 @@ for runs in range(1000):
     wprior = np.absolute(np.array([prior1_lim[i]-prior1_lim[i-1] for i in np.arange(1, len(prior1_lim), 2) ]))
 
     # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
-    nsteps, step_size = 10000, 0.01*wprior.min()
+    nsteps, step_size = 1000, 0.01*wprior.min()
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), a=step_size)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim))
+    # sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior1_lim), a=step_size)
     sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
 
     '''
@@ -198,7 +199,7 @@ ax.axvline(a_true, color='blue', linewidth=2)
 ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(a_means), a_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
 ax.set_title("1000 Runs with Random Seeds")
 ax.set_xlabel("$a$")
-fig.savefig('a_mean_distribution.pdf', format='pdf')
+fig.savefig('a_mean_distribution_fix.pdf', format='pdf')
 
 fig, ax = plt.subplots()
 ax.hist(b_means, bins=500, align='mid', rwidth=0.9, linewidth=0, color='r')
@@ -206,7 +207,7 @@ ax.axvline(b_true, color='blue', linewidth=2)
 ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(b_means), b_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
 ax.set_title("1000 Runs with Random Seeds")
 ax.set_xlabel("$b$")
-fig.savefig('b_mean_distribution.pdf', format='pdf')
+fig.savefig('b_mean_distribution_fix.pdf', format='pdf')
 
 fig, ax = plt.subplots()
 ax.hist(c_means, bins=500, align='mid', rwidth=0.9, linewidth=0, color='r')
@@ -214,4 +215,4 @@ ax.axvline(c_true, color='blue', linewidth=2)
 ax.text(x=0.67, y=0.89, s="Mean = {0}\n Truth = {1}".format(np.mean(c_means), c_true), bbox=dict(facecolor='white', linewidth=0.3, pad=12), transform=ax.transAxes)
 ax.set_title("1000 Runs with Random Seeds")
 ax.set_xlabel("$c$")
-fig.savefig('c_mean_distribution.pdf', format='pdf')
+fig.savefig('c_mean_distribution_fix.pdf', format='pdf')
