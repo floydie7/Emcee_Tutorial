@@ -12,7 +12,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import emcee
 import corner
+import time
 
+start_time = time.time()
 np.random.seed(100)
 #%%
 '''
@@ -30,19 +32,20 @@ verr = 0
 #%%
 # Now, generate some synthetic data from our model.
 N = 1000         # Number of data points
-x = np.sort(2*np.random.rand(N))
+x = 2*np.random.rand(N)
 y_true = a_true*x**2 + b_true*x + c_true
 yerr = 0.1 * y_true + verr * np.random.rand(N)
 y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 #%%
 # First figure we'll show our true model in red and our synthetic data we just generated.
-# fig, ax = plt.subplots()
-# ax.errorbar(x, y, yerr=yerr, fmt='k.')
-# ax.plot(x, y_true, color='r')
-# ax.set_title("Model with data")
-# plt.show();
-# fig.savefig('model_data.pdf', format='pdf')
+fig, ax = plt.subplots()
+ax.errorbar(x, y, yerr=yerr, fmt='k.')
+ax.plot(np.sort(x), np.sort(y_true), color='r')
+ax.set_title("Model with data")
+plt.show();
+#fig.savefig('model_data.pdf', format='pdf')
+# raise SystemExit
 #%%
 '''
 Here we want to define our maximum likelihood function of a least squares solution in order to optimize it.
@@ -85,7 +88,7 @@ Now we can set up our MCMC sampler to explore the possible values nearby our max
 
 # Initial Run to establish values
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
-ndim, nwalkers = 3, 100
+ndim, nwalkers = 3, 1000
 # Set the initial position of the walkers in the space. To start, set walkers uniformly distributed in space.
 # pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 # pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
@@ -190,6 +193,8 @@ plt.show()
 # plt.axis([1.8, 2.0, 15, 19])
 # plt.savefig('sampler_data_zoom.pdf', format='pdf')
 
+end_time = time.time()
+
 a_mcmc, b_mcmc, c_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]), zip(*np.percentile(samples, [16, 50, 84], axis=0)))
 print("""MCMC result:
     a = {0[0]} +{0[1]} -{0[2]} (truth: {1})
@@ -199,3 +204,4 @@ print("""MCMC result:
 
 print("Mean acceptance fraction:", np.mean(sampler.acceptance_fraction))
 print("Autocorrelation time:", sampler.get_autocorr_time())
+print("Computation time:", end_time - start_time, " s")
