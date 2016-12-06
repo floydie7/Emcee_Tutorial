@@ -31,20 +31,21 @@ c_true = 4.17
 verr = 0
 #%%
 # Now, generate some synthetic data from our model.
-N = 1000         # Number of data points
+N = 10000         # Number of data points
 x = 2*np.random.rand(N)
 y_true = a_true*x**2 + b_true*x + c_true
-yerr = 0.1 * y_true + verr * np.random.rand(N)
+yerr = np.random.normal(0.0, 1.0, N)
+# yerr = np.random.randn(N)
 y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 #%%
 # First figure we'll show our true model in red and our synthetic data we just generated.
-fig, ax = plt.subplots()
-ax.errorbar(x, y, yerr=yerr, fmt='k.')
-ax.plot(np.sort(x), np.sort(y_true), color='r')
-ax.set_title("Model with data")
-plt.show();
-#fig.savefig('model_data.pdf', format='pdf')
+# fig, ax = plt.subplots()
+# ax.errorbar(x, y, yerr=yerr, fmt='k.')
+# ax.plot(np.sort(x), np.sort(y_true), color='r')
+# ax.set_title("Model with data")
+# plt.show();
+# fig.savefig('model_data.pdf', format='pdf')
 # raise SystemExit
 #%%
 '''
@@ -88,7 +89,7 @@ Now we can set up our MCMC sampler to explore the possible values nearby our max
 
 # Initial Run to establish values
 # Set the number of dimensions of parameter space and the nubmer of walkers to explore the space.
-ndim, nwalkers = 3, 1000
+ndim, nwalkers = 3, 100
 # Set the initial position of the walkers in the space. To start, set walkers uniformly distributed in space.
 # pos = [result['x'] + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 # pos0 = [np.random.rand(ndim) for i in range(nwalkers)]
@@ -140,11 +141,13 @@ pos1 = emcee.utils.sample_ball([a_true, b_true, c_true], np.array([1e-2, 1e-2, 1
 
 # Set up and run the sampler again but with better a priori positions and the smaller prior ranges.
 # nsteps, step_size = 1000, 1e-3*wprior.min()
-nsteps = 100000
+nsteps = 10000
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior0_lim), threads=3)
 # sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr, prior1_lim), a=step_size, threads=3)
+start_sampler = time.time()
 sampler.run_mcmc(pos1, nsteps)     # Run the sampler again starting at position pos1.
+end_sampler = time.time()
 #%%
 '''
 To view the results let's look at the variation in the parameters
@@ -170,15 +173,15 @@ bx3.axhline(c_true, color='blue', linewidth=2)
 bx3.set_ylabel("$c$")
 bx3.set_xlabel("Steps")
 
-plt.show()
-# fig2.savefig('param_var.pdf', format='pdf')
+# plt.show()
+fig2.savefig('param_var.pdf', format='pdf')
 
 burnin = nsteps/3.0    # Set burn-in to be 1/3 Number of steps.
 samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
 fig3 = corner.corner(samples, labels=["$a$", "$b$", "$c$"], truths=[a_true, b_true, c_true])
-plt.show()
-# fig3.savefig('corner_plot.pdf', format='pdf')
+# plt.show()
+fig3.savefig('corner_plot.pdf', format='pdf')
 
 # plt.figure()
 # plt.errorbar(x, y, yerr=yerr, fmt=".k")
@@ -204,4 +207,5 @@ print("""MCMC result:
 
 print("Mean acceptance fraction:", np.mean(sampler.acceptance_fraction))
 print("Autocorrelation time:", sampler.get_autocorr_time())
-print("Computation time:", end_time - start_time, " s")
+print("Sampler computation time:", end_sampler - start_sampler, " s")
+print("Total run time:", end_time - start_time, " s")
