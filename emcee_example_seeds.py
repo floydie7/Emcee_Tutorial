@@ -29,10 +29,11 @@ c_true = 4.17
 verr = 0
 
 # Now, generate some synthetic data from our model.
-N = 1000         # Number of data points
-x = np.sort(2*np.random.rand(N))
+N = 10000         # Number of data points
+x = 2*np.random.rand(N)
 y_true = a_true*x**2 + b_true*x + c_true
-yerr = 0.1 * y_true + verr * np.random.rand(N)
+# yerr = np.random.normal(0.0, 1.0, N)
+yerr = 1.0
 y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 
@@ -84,7 +85,7 @@ Now we can set up our MCMC sampler to explore the possible values nearby our max
 
 
 data = []  # storage array for all runs
-for runs in range(1000):
+for runs in range(10):
     print("Run # ",runs)
 
     np.random.seed() # Unspecify the seed to allow it to take on different values from this point on.

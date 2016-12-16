@@ -34,19 +34,21 @@ verr = 0
 N = 10000         # Number of data points
 x = 2*np.random.rand(N)
 y_true = a_true*x**2 + b_true*x + c_true
-yerr = np.random.normal(0.0, 1.0, N)
-# yerr = np.random.randn(N)
+# yerr = np.random.normal(0.0, 1.0, N)
+yerr = 1.0
 y = a_true * x**2 + b_true * x + c_true + yerr*np.random.randn(N)
 
 #%%
 # First figure we'll show our true model in red and our synthetic data we just generated.
-# fig, ax = plt.subplots()
-# ax.errorbar(x, y, yerr=yerr, fmt='k.')
-# ax.plot(np.sort(x), np.sort(y_true), color='r')
-# ax.set_title("Model with data")
+fig, ax = plt.subplots()
+ax.errorbar(x, y, yerr=yerr, fmt='k.')
+ax.plot(np.sort(x), np.sort(y_true), color='r')
+ax.set_title("Model with data")
+ax.set_xlabel('$x$')
+ax.set_ylabel('$y$')
 # plt.show();
-# fig.savefig('model_data.pdf', format='pdf')
-# raise SystemExit
+fig.savefig('model_data.pdf', format='pdf')
+raise SystemExit
 #%%
 '''
 Here we want to define our maximum likelihood function of a least squares solution in order to optimize it.
